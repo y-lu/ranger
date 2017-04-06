@@ -233,9 +233,27 @@ class ITerm2ImageDisplayer(ImageDisplayer, FileManagerAware):
         content = self._encode_image_content(path)
         display_protocol = "\033"
         close_protocol = "\a"
-        if "screen" in os.environ['TERM']:
-            display_protocol += "Ptmux;\033\033"
-            close_protocol += "\033\\"
+        """ Support (nested) tmux session(s) in iTerm2. 
+            1. We rely on the existence of TMUX instead of checking TERM. 
+            2. If there are *nested* tmux sessions, the user should set the shell
+               environment variable TMUX_NESTED_LEVELS accordingly before running 
+               ranger. E.g. set it to 2 if there are two tmux sessions.
+            3. If image is not displayed at the right place, please set draw_borders to 
+               true in rc.conf.
+        """
+        if os.environ['TMUX']:
+            if os.environ['TMUX_NESTED_LEVELS']:
+                tmp1 = ""
+                for i in range(int(os.environ['TMUX_NESTED_LEVELS'])):
+                    tmp1 = tmp1.replace("\033","\033\033")
+                    tmp1 = "Ptmux;\033\033" + tmp1
+                    close_protocol = close_protocol.replace("\033", "\033\033")
+                    close_protocol += "\033\\"
+                display_protocol += tmp1
+            else:
+                display_protocol += "Ptmux;\033\033"
+                close_protocol += "\033\\"
+
 
         text = "{0}]1337;File=inline=1;preserveAspectRatio=0;size={1};width={2}px:{3}{4}\n".format(
             display_protocol,
