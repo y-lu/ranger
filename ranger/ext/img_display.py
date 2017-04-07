@@ -241,8 +241,11 @@ class ITerm2ImageDisplayer(ImageDisplayer, FileManagerAware):
             3. If image is not displayed at the right place, please set draw_borders to 
                true in rc.conf.
         """
-        if os.environ['TMUX']:
-            if os.environ['TMUX_NESTED_LEVELS']:
+        if 'TMUX' in os.environ:
+            if 'TMUX_NESTED_LEVELS' not in os.environ:
+                display_protocol += "Ptmux;\033\033"
+                close_protocol += "\033\\"
+            else:
                 tmp1 = ""
                 for i in range(int(os.environ['TMUX_NESTED_LEVELS'])):
                     tmp1 = tmp1.replace("\033","\033\033")
@@ -250,9 +253,6 @@ class ITerm2ImageDisplayer(ImageDisplayer, FileManagerAware):
                     close_protocol = close_protocol.replace("\033", "\033\033")
                     close_protocol += "\033\\"
                 display_protocol += tmp1
-            else:
-                display_protocol += "Ptmux;\033\033"
-                close_protocol += "\033\\"
 
 
         text = "{0}]1337;File=inline=1;preserveAspectRatio=0;size={1};width={2}px:{3}{4}\n".format(
